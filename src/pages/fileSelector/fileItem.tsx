@@ -14,6 +14,8 @@ interface IProps {
     type: "folder" | "file";
     path: string;
     parentPath: string;
+    /** 可选显示名称（用于存储根目录等 path 不友好的场景） */
+    name?: string;
     checked?: boolean;
     onItemPress: (currentChecked?: boolean) => void;
     onCheckedChange: (checked: boolean) => void;
@@ -23,6 +25,7 @@ function FileItem(props: IProps) {
         type,
         path,
         parentPath,
+        name,
         checked,
         onItemPress,
         onCheckedChange: onCheckChange,
@@ -53,9 +56,10 @@ function FileItem(props: IProps) {
                     style={styles.path}
                     numberOfLines={1}
                     ellipsizeMode="tail">
-                    {path.substring(
-                        parentPath === "/" ? 1 : parentPath.length + 1,
-                    )}
+                    {name ??
+                        path.substring(
+                            parentPath === "/" ? 1 : parentPath.length + 1,
+                        )}
                 </ThemeText>
             </Pressable>
             <TouchableOpacity
@@ -74,7 +78,8 @@ export default memo(
     (prev, curr) =>
         prev.checked === curr.checked &&
         prev.parentPath === curr.parentPath &&
-        prev.path === curr.path,
+        prev.path === curr.path &&
+        prev.name === curr.name,
 );
 
 const styles = StyleSheet.create({

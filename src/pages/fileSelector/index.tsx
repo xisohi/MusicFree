@@ -16,10 +16,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Pressable, StyleSheet, View } from "react-native";
 import {
     ExternalStorageDirectoryPath,
-    exists,
-    getAllExternalFilesDirs,
     readDir,
 } from "react-native-fs";
+import safUtil from "@/native/safUtil";
 import { FlatList } from "react-native-gesture-handler";
 import FileItem from "./fileItem";
 
@@ -31,6 +30,8 @@ interface IPathItem {
 interface IFileItem {
     path: string;
     type: "file" | "folder";
+    /** 可选显示名称（用于存储根目录等 path 不友好的场景） */
+    name?: string;
 }
 
 const ITEM_HEIGHT = rpx(96);
@@ -66,39 +67,26 @@ export default function FileSelector() {
             setLoading(true);
             try {
                 if (currentPath.path === "/") {
+                    // 根目录：列出所有存储卷（内部存储 + USB + SD卡）
                     try {
-                        const allExt = await getAllExternalFilesDirs();
-                        if (allExt.length > 1) {
-                            const sdCardPaths = allExt.map(sdp =>
-                                sdp.substring(0, sdp.indexOf("/Android")),
-                            );
-                            if (
-                                (
-                                    await Promise.all(
-                                        sdCardPaths.map(_ => exists(_)),
-                                    )
-                                ).every(val => val)
-                            ) {
-                                setFilesData(
-                                    sdCardPaths.map(_ => ({
-                                        type: "folder",
-                                        path: _,
-                                    })),
-                                );
+                        const storagePaths = await safUtil.getAllStoragePaths();
+                        const items: IFileItem[] = storagePaths.map(p => {
+                            let name = p;
+                            if (p === ExternalStorageDirectoryPath || p === "/storage/emulated/0") {
+                                name = "内部存储";
+                            } else if (p.includes("usb")) {
+                                name = "USB 存储 (" + p.substring(p.lastIndexOf("/") + 1) + ")";
+                            } else {
+                                name = p.substring(p.lastIndexOf("/") + 1) || p;
                             }
-                        } else {
-                            setCurrentPath({
-                                path: ExternalStorageDirectoryPath,
-                                parent: null,
-                            });
-                            return;
-                        }
-                    } catch {
-                        setCurrentPath({
-                            path: ExternalStorageDirectoryPath,
-                            parent: null,
+                            return { type: "folder", path: p, name };
                         });
-                        return;
+                        setFilesData(items);
+                    } catch {
+                        // 降级：只显示内部存储
+                        setFilesData([
+                            { type: "folder", path: ExternalStorageDirectoryPath, name: "内部存储" },
+                        ]);
                     }
                 } else {
                     const res = (await readDir(currentPath.path)) ?? [];
@@ -179,6 +167,7 @@ export default function FileSelector() {
     const renderItem = ({ item }: { item: IFileItem }) => (
         <FileItem
             path={item.path}
+            name={item.name}
             type={item.type}
             parentPath={currentPath.path}
             onItemPress={currentChecked => {

@@ -25,7 +25,11 @@ export async function setup() {
         let validSheet: IMusic.IMusicItem[] = [];
         for (let musicItem of sheet) {
             const localPath = getLocalPath(musicItem);
-            if (localPath && (await exists(localPath))) {
+            // USB 路径跳过存在性校验，避免 U 盘拔出后音乐被误删
+            const isUsbPath =
+                localPath?.startsWith("/storage/usb") ||
+                localPath?.startsWith("/mnt/usb");
+            if (localPath && (isUsbPath || (await exists(localPath)))) {
                 validSheet.push(musicItem);
             }
         }
