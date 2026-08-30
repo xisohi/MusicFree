@@ -3,9 +3,7 @@ import { compare } from "compare-versions";
 import DeviceInfo from "react-native-device-info";
 
 const updateList = [
-    "https://gitee.com/maotoumao/MusicFree/raw/master/release/version.json",
-    "https://raw.githubusercontent.com/maotoumao/MusicFree/master/release/version.json",
-    "https://cdn.jsdelivr.net/gh/maotoumao/MusicFree@master/release/version.json",
+    "https://xhys.xisohi.dpdns.org/update/MusicFree.json",
 ];
 
 interface IUpdateInfo {
@@ -22,6 +20,10 @@ export default async function checkUpdate(): Promise<IUpdateInfo | undefined> {
     for (let i = 0; i < updateList.length; ++i) {
         try {
             const rawInfo = (await axios.get(updateList[i])).data;
+            // 兼容 changeLog 为字符串（用 \n 分隔）的格式
+            if (typeof rawInfo.changeLog === "string") {
+                rawInfo.changeLog = rawInfo.changeLog.split("\n");
+            }
             if (compare(rawInfo.version, currentVersion, ">")) {
                 return {
                     needUpdate: true,
