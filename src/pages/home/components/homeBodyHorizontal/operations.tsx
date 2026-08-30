@@ -2,14 +2,12 @@ import { useI18N } from "@/core/i18n";
 import { ROUTE_PATH, useNavigate } from "@/core/router";
 import rpx from "@/utils/rpx";
 import React from "react";
-import { StyleSheet } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { StyleSheet, View } from "react-native";
 import ActionButton from "../ActionButton";
 
 export default function Operations() {
     const navigate = useNavigate();
     const { t } = useI18N();
-
 
     const actionButtons = [
         {
@@ -43,18 +41,15 @@ export default function Operations() {
     ] as const;
 
     return (
-        <ScrollView style={styles.container}>
-            {actionButtons.map((action, index) => (
+        <View style={styles.container}>
+            {actionButtons.map(action => (
                 <ActionButton
-                    style={[
-                        styles.actionButtonStyle,
-                        index % 4 ? styles.actionMarginLeft : null,
-                    ]}
+                    style={styles.actionButtonStyle}
                     key={action.title}
                     {...action}
                 />
             ))}
-        </ScrollView>
+        </View>
     );
 }
 
@@ -63,17 +58,15 @@ const styles = StyleSheet.create({
         width: rpx(200),
         flexGrow: 0,
         flexShrink: 0,
-        paddingHorizontal: rpx(24),
-        marginVertical: rpx(32),
-        flexDirection: "row",
-        flexWrap: "wrap",
+        paddingHorizontal: rpx(20),
+        paddingVertical: rpx(12),
+        flexDirection: "column",
+        justifyContent: "flex-start",
     },
     actionButtonStyle: {
-        width: rpx(157.5),
-        height: rpx(160),
-        borderRadius: rpx(18),
-    },
-    actionMarginLeft: {
-        marginTop: rpx(24),
+        width: "100%",
+        height: rpx(100),
+        marginBottom: rpx(14),
+        borderRadius: rpx(12),
     },
 });
