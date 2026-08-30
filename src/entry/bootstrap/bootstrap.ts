@@ -96,6 +96,27 @@ async function bootstrapImpl() {
     trace("配置初始化完成");
     logger.mark("配置初始化完成");
 
+    // 初始化默认插件订阅地址（仅首次启动，不覆盖用户已有设置）
+    try {
+        if (!PersistStatus.get("app.defaultSubscribeInitialized")) {
+            const currentSubscribe = Config.getConfig("plugin.subscribeUrl");
+            if (!currentSubscribe) {
+                Config.setConfig(
+                    "plugin.subscribeUrl",
+                    JSON.stringify([
+                        {
+                            name: "默认音源",
+                            url: "https://xhys.xisohi.dpdns.org/MusicFree/MusicFree.json",
+                        },
+                    ]),
+                );
+            }
+            PersistStatus.set("app.defaultSubscribeInitialized", true);
+        }
+    } catch {
+        // 静默失败，不影响启动
+    }
+
     // 加载插件
     await PluginManager.setup();
     logger.mark("插件初始化完成");
