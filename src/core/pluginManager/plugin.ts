@@ -480,13 +480,7 @@ class PluginMethodsWrapper implements IPlugin.IPluginInstanceMethods {
 
             const deprecatedLrcUrl = lrcSource?.lrc || musicItem.lrc;
 
-            // 本地的文件名
-            let filename: string | undefined = `${pathConst.lrcCachePath
-            }${nanoid()}.lrc`;
-            let filenameTrans: string | undefined = `${pathConst.lrcCachePath
-            }${nanoid()}.lrc`;
-
-            // 旧版本兼容
+            // 旧版本兼容：从 URL 下载歌词
             if (!(rawLrc || translation)) {
                 if (deprecatedLrcUrl) {
                     rawLrc = (
@@ -499,21 +493,34 @@ class PluginMethodsWrapper implements IPlugin.IPluginInstanceMethods {
                 }
             }
 
-            if (rawLrc) {
-                await writeFile(filename, rawLrc, "utf8");
-            } else {
-                filename = undefined;
-            }
-            if (translation) {
-                await writeFile(filenameTrans, translation, "utf8");
-            } else {
-                filenameTrans = undefined;
-            }
-
             if (rawLrc || translation) {
+                // 本地歌曲：歌词已保存到歌曲同文件夹（内嵌/同名.lrc/关联后保存），不重复缓存
+                if (originalMusicItem.platform === localPluginPlatform) {
+                    return {
+                        rawLrc: rawLrc || undefined,
+                        translation: translation || undefined,
+                    };
+                }
+
+                // 在线歌曲：永久缓存到文件
+                let filename: string | undefined = `${pathConst.lrcCachePath
+                }${nanoid()}.lrc`;
+                let filenameTrans: string | undefined = `${pathConst.lrcCachePath
+                }${nanoid()}.lrc`;
+
+                if (rawLrc) {
+                    await writeFile(filename, rawLrc, "utf8");
+                } else {
+                    filename = undefined;
+                }
+                if (translation) {
+                    await writeFile(filenameTrans, translation, "utf8");
+                } else {
+                    filenameTrans = undefined;
+                }
+
                 MediaCache.setMediaCache(
                     produce(musicItemCache || musicItem, draft => {
-                        musicItemCache?.$localLyric?.rawLrc;
                         objectPath.set(draft, "$localLyric.rawLrc", filename);
                         objectPath.set(
                             draft,
@@ -1046,17 +1053,21 @@ const localFilePluginDefine: IPlugin.IPluginDefine = {
         return null;
     },
     async getLyric(musicBase) {
-        const localPath = getLocalPath(musicBase);
+        let localPath = getLocalPath(musicBase);
         let rawLrc: string | null = null;
         if (localPath) {
+            // 去掉 file:// 前缀，确保 exists/readFile 能正确处理
+            if (localPath.startsWith("file://")) {
+                localPath = localPath.replace("file://", "");
+            }
             // 读取内嵌歌词
             try {
                 rawLrc = await Mp3Util.getLyric(localPath);
             } catch (e) {
                 console.log("读取内嵌歌词失败", e);
             }
-            if (!rawLrc) {
-                // 读取配置歌词
+            if (!rawLrc && !localPath.startsWith("content://")) {
+                // 读取同文件夹同名 .lrc 歌词（content:// URI 暂不支持直接读取）
                 const lastDot = localPath.lastIndexOf(".");
                 const lrcPath = localPath.slice(0, lastDot) + ".lrc";
 

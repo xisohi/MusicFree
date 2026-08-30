@@ -3,17 +3,18 @@ import { ITrackPlayer } from "@/types/core/trackPlayer";
 import { IInjectable } from "@/types/infra";
 import LyricParser, { IParsedLrcItem } from "@/utils/lrcParser";
 import { getMediaExtraProperty, patchMediaExtra } from "@/utils/mediaExtra";
-import { isSameMediaItem } from "@/utils/mediaUtils";
+import { getLocalPath, isSameMediaItem } from "@/utils/mediaUtils";
 import minDistance from "@/utils/minDistance";
 import { atom, getDefaultStore, useAtomValue } from "jotai";
 import { Plugin } from "./pluginManager";
 
 import pathConst from "@/constants/pathConst";
+import { localPluginPlatform } from "@/constants/commonConst";
 import LyricUtil from "@/native/lyricUtil";
 import { checkAndCreateDir } from "@/utils/fileUtils";
 import PersistStatus from "@/utils/persistStatus";
 import CryptoJs from "crypto-js";
-import { unlink, writeFile } from "react-native-fs";
+import { unlink, writeFile, exists } from "react-native-fs";
 import RNTrackPlayer, { Event } from "react-native-track-player";
 import { TrackPlayerEvents } from "@/core.defination/trackPlayer";
 import { IPluginManager } from "@/types/core/pluginManager";
@@ -140,7 +141,43 @@ class LyricManager implements IInjectable {
             if (this.trackPlayer.isCurrentMusic(musicItem)) {
                 this.refreshLyric(false);
             }
+            // 本地音乐：关联歌词后，异步获取歌词并覆盖保存到歌曲同文件夹
+            if (musicItem.platform === localPluginPlatform) {
+                this.saveAssociatedLyricToLocalFolder(musicItem, linkToMusicItem);
+            }
             return true;
+        }
+    }
+
+    /**
+     * 获取关联音乐项的歌词，保存到本地歌曲同文件夹（覆盖）
+     */
+    private async saveAssociatedLyricToLocalFolder(musicItem: IMusic.IMusicItem, linkToMusicItem: ICommon.IMediaBase) {
+        try {
+            const lrcSource = await this.pluginManager.getByMedia(linkToMusicItem)?.methods?.getLyric(linkToMusicItem as IMusic.IMusicItem);
+            if (!lrcSource?.rawLrc) {
+                console.warn("[LyricSave] associated lyric has no rawLrc");
+                return;
+            }
+            let localPath = getLocalPath(musicItem);
+            if (!localPath) {
+                console.warn("[LyricSave] localPath is null for associated lyric");
+                return;
+            }
+            if (localPath.startsWith("file://")) {
+                localPath = localPath.replace("file://", "");
+            }
+            if (localPath.startsWith("content://")) {
+                console.warn("[LyricSave] content:// URI skip write for associated lyric");
+                return;
+            }
+            const lastDot = localPath.lastIndexOf(".");
+            const lrcPath = localPath.slice(0, lastDot) + ".lrc";
+            console.warn("[LyricSave] overwriting with associated lyric:", lrcPath);
+            await writeFile(lrcPath, lrcSource.rawLrc, "utf8");
+            console.warn("[LyricSave] overwrite success");
+        } catch (e) {
+            console.warn("[LyricSave] overwrite failed:", e);
         }
     }
 
@@ -283,6 +320,40 @@ class LyricManager implements IInjectable {
             // 切换到其他歌曲了, 直接返回
             if (!this.trackPlayer.isCurrentMusic(currentMusicItem)) {
                 return;
+            }
+
+            // 本地音乐：有歌词且同文件夹没有 .lrc 时，保存到歌曲同文件夹（同名 .lrc）
+            if (
+                lrcSource?.rawLrc &&
+                currentMusicItem.platform === localPluginPlatform
+            ) {
+                let localPath = getLocalPath(currentMusicItem);
+                console.warn("[LyricSave] platform:", currentMusicItem.platform, "localPath:", localPath);
+                if (localPath) {
+                    if (localPath.startsWith("file://")) {
+                        localPath = localPath.replace("file://", "");
+                    }
+                    if (localPath.startsWith("content://")) {
+                        console.warn("[LyricSave] content:// URI skip write");
+                    } else {
+                        const lastDot = localPath.lastIndexOf(".");
+                        const lrcPath = localPath.slice(0, lastDot) + ".lrc";
+                        try {
+                            const fileExists = await exists(lrcPath);
+                            if (!fileExists) {
+                                console.warn("[LyricSave] saving to:", lrcPath);
+                                await writeFile(lrcPath, lrcSource.rawLrc, "utf8");
+                                console.warn("[LyricSave] save success");
+                            } else {
+                                console.warn("[LyricSave] already exists, skip:", lrcPath);
+                            }
+                        } catch (e) {
+                            console.warn("[LyricSave] save failed:", e);
+                        }
+                    }
+                } else {
+                    console.warn("[LyricSave] localPath is null");
+                }
             }
 
             // 如果源不存在，恢复默认设置
