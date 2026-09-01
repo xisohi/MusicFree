@@ -105,8 +105,8 @@ async function bootstrapImpl() {
                     "plugin.subscribeUrl",
                     JSON.stringify([
                         {
-                            name: "默认音源",
-                            url: "https://xhys.xisohi.dpdns.org/MusicFree/MusicFree.json",
+                            name: "星辉音源",
+                            url: "https://xhys.xisohi.dpdns.org/MusicFree/XHMusic.json",
                         },
                     ]),
                 );
