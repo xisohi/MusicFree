@@ -258,6 +258,30 @@ async function extraMakeup() {
                     ),
                 );
                 Toast.success("安装成功~");
+            } else if (url.startsWith("musicfree://play")) {
+                // 按关键词搜索并播放（车机/第三方App调用）
+                // 格式: musicfree://play?keyword=<URL编码的关键词>
+                const keyword = decodeURIComponent(
+                    url.replace(/^musicfree:\/\/play\?keyword=/, ""),
+                );
+                if (keyword) {
+                    Toast.success(`正在搜索：${keyword}`);
+                    const plugins = PluginManager.getSortedSearchablePlugins(
+                        "music",
+                    );
+                    for (const plugin of plugins) {
+                        const result = await plugin.methods
+                            .search(keyword, 1, "music")
+                            .catch(() => null);
+                        const musicItem = result?.data?.[0];
+                        if (musicItem) {
+                            await TrackPlayer.play(musicItem);
+                            Toast.success(`播放：${musicItem.title}`);
+                            return;
+                        }
+                    }
+                    Toast.warn("未找到相关歌曲");
+                }
             } else if (url.endsWith(".js")) {
                 PluginManager.installPluginFromLocalFile(url, {
                     notCheckVersion: Config.getConfig(
