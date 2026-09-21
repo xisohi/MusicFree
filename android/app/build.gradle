@@ -169,6 +169,16 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+
+    // !! APK 命名：用软件名 MusicFree，不用 app
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def abi = output.getFilter(OutputFile.ABI)
+            outputFileName = abi == null
+                ? "MusicFree-universal-release.apk"
+                : "MusicFree-${abi}-release.apk"
+        }
+    }
 }
 
 dependencies {

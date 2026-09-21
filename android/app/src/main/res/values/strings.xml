@@ -6,4 +6,6 @@
     <!-- rtnp channel name -->
     <string name="rntp_temporary_channel_name">musicfree_temporary_channel</string>
     <string name="playback_channel_name">MusicFree</string>
+    <string name="music_widget_name">音乐控制</string>
+    <string name="music_widget_description">车机音乐控制小组件</string>
 </resources>

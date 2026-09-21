@@ -164,5 +164,18 @@
               <data android:pathPattern=".*\\.JS" />
           </intent-filter>
       </activity>
+
+        <!-- 音乐控制小组件 -->
+        <receiver
+            android:name=".widget.MusicControlWidgetProvider"
+            android:exported="true"
+            android:label="@string/music_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/music_widget_info" />
+        </receiver>
     </application>
 </manifest>

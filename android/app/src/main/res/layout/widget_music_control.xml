@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:background="#333333"
+    android:padding="8dp">
+
+    <!-- 上一首 -->
+    <ImageButton
+        android:id="@+id/btn_prev"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:src="@android:drawable/ic_media_previous"
+        android:scaleType="centerInside"
+        android:contentDescription="上一首" />
+
+    <!-- 播放/暂停 -->
+    <ImageButton
+        android:id="@+id/btn_play_pause"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginHorizontal="16dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:src="@android:drawable/ic_media_play"
+        android:scaleType="centerInside"
+        android:contentDescription="播放/暂停" />
+
+    <!-- 下一首 -->
+    <ImageButton
+        android:id="@+id/btn_next"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:src="@android:drawable/ic_media_next"
+        android:scaleType="centerInside"
+        android:contentDescription="下一首" />
+
+</LinearLayout>
