@@ -523,6 +523,9 @@ export interface ILanguageData {
     // 面板相关 - 播放速度
     "panel.playRate.title": string; // 播放速度
 
+    // 播放页 - 音量
+    "musicDetail.volume": string; // 音量
+
     // 面板相关 - 歌单标签
     "panel.sheetTags.title": string; // 歌单类别
 

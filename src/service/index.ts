@@ -29,13 +29,20 @@ module.exports = async function () {
                 "basic.tempRemoteDuck",
             );
             if (tempRemoteDuckConf === "lowerVolume") {
+                const persistedVolume = PersistStatus.get("music.volume");
+                const userVolume =
+                    typeof persistedVolume === "number"
+                        ? persistedVolume / 100
+                        : 1;
                 if (paused) {
                     const tempRemoteDuckVolume = Config.getConfig(
                         "basic.tempRemoteDuckVolume",
                     ) ?? 0.5;
-                    return RNTrackPlayer.setVolume(1 - tempRemoteDuckVolume);
+                    return RNTrackPlayer.setVolume(
+                        userVolume * (1 - tempRemoteDuckVolume),
+                    );
                 } else {
-                    return RNTrackPlayer.setVolume(1);
+                    return RNTrackPlayer.setVolume(userVolume);
                 }
             } else {
                 if (paused) {

@@ -22,6 +22,8 @@ interface IPersistStatus {
     "music.playList": IMusic.IMusicItem[];
     /** 速度 */
     "music.rate": number;
+    /** 播放器内音量（0-100） */
+    "music.volume": number;
     /** 音质 */
     "music.quality": IMusic.IQualityKey;
     /** app */

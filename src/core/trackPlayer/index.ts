@@ -127,6 +127,7 @@ class TrackPlayer extends EventEmitter<{
 
     async setupTrackPlayer() {
         const rate = PersistStatus.get("music.rate");
+        const volume = PersistStatus.get("music.volume");
         const musicQueue = PersistStatus.get("music.playList");
         const repeatMode = PersistStatus.get("music.repeatMode");
         const progress = PersistStatus.get("music.progress");
@@ -139,6 +140,10 @@ class TrackPlayer extends EventEmitter<{
         // 状态恢复
         if (rate) {
             ReactNativeTrackPlayer.setRate(+rate / 100);
+        }
+        if (typeof volume === "number" && volume >= 0 && volume <= 100) {
+            // 恢复用户设定的播放器内音量
+            ReactNativeTrackPlayer.setVolume(volume / 100);
         }
         if (repeatMode) {
             getDefaultStore().set(repeatModeAtom, repeatMode as MusicRepeatMode);
